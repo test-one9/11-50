@@ -1,41 +1,14 @@
-html
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simple Game</title>
-<style>
-    canvas {
-        border: 1px solid black;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Mario Web Version</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <canvas id="gameCanvas" width="400" height="400"></canvas>
-
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-
-        let x = 200;
-        let y = 200;
-
-        function drawPlayer() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillRect(x, y, 20, 20);
-        }
-
-        function updateGame() {
-            drawPlayer();
-        }
-
-        function gameLoop() {
-            updateGame();
-            requestAnimationFrame(gameLoop);
-        }
-
-        gameLoop();
-    </script>
+    <canvas id="game-canvas" width="640" height="480"></canvas>
+    <script src="script.js"></script>
 </body>
 </html>
