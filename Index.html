@@ -4,7 +4,7 @@ html
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Racing Game</title>
+<title>Simple Game</title>
 <style>
     canvas {
         border: 1px solid black;
@@ -12,38 +12,30 @@ html
 </style>
 </head>
 <body>
-<canvas id="gameCanvas" width="800" height="600"></canvas>
-<script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
 
-    let playerX = 400;
-    let playerY = 500;
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
 
-    function drawPlayer() {
-        ctx.fillStyle = 'red';
-        ctx.fillRect(playerX, playerY, 50, 50);
-    }
+        let x = 200;
+        let y = 200;
 
-    function clearCanvas() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-
-    function updateGame() {
-        clearCanvas();
-        drawPlayer();
-    }
-
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'ArrowLeft') {
-            playerX -= 10;
-        } else if (event.key === 'ArrowRight') {
-            playerX += 10;
+        function drawPlayer() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(x, y, 20, 20);
         }
-        updateGame();
-    });
 
-    updateGame();
-</script>
+        function updateGame() {
+            drawPlayer();
+        }
+
+        function gameLoop() {
+            updateGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
 </body>
 </html>
